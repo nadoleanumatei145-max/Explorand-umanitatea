@@ -1,0 +1,32 @@
+{
+  "armata_romana": {
+    "location": "Armata-Romana-Pilonul-Unirii-Nationale-din-1918-si-Aparatorul-Granitelor.pdf",
+    "name": "Armata Română - Pilonul Unirii Naționale",
+    "description": "O analiză detaliată a rolului crucial jucat de Armata Română în realizarea Marii Uniri din 1918 și în apărarea noilor frontiere naționale.",
+    "type": "PDF"
+  },
+  "calatorie_china": {
+    "location": "Calatorie in China.pdf",
+    "name": "Călătorie în China",
+    "description": "O explorare fascinantă a culturii, istoriei și peisajelor Chinei, oferind o perspectivă captivantă asupra tradițiilor și modernității asiatice.",
+    "type": "PDF"
+  },
+  "episodul_6": {
+    "location": "Episodul6.pdf",
+    "name": "Episodul 6: Perspective Istorice",
+    "description": "O continuare a seriei istorice, concentrându-se pe evenimente cheie și personalități marcante care au modelat cursul istoriei recente.",
+    "type": "PDF"
+  },
+  "egipt_antic": {
+    "location": "Proiect istorie Egipt _20260310_090829_0000_260422_123213.pdf",
+    "name": "Civilizația Egiptului Antic",
+    "description": "Un studiu amplu asupra civilizației egiptene, explorând de la piramidele monumentale până la secretele vieții cotidiene pe malurile Nilului.",
+    "type": "PPTX"
+  },
+  "razboiul_intregire": {
+    "location": "RĂZBOIUL DE INTREGIRE NAȚIONALĂ CONTRIBUȚIA ARMATE_260422_123244.pdf",
+    "name": "Războiul de Întregire Națională",
+    "description": "O prezentare documentată a efortului militar și a contribuției strategice a armatei române în timpul Războiului de Întregire Națională.",
+    "type": "PPTX"
+  }
+}

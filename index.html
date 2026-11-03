@@ -1,37 +1,611 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ro">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explorand Umanitatea</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Timpul Decimal Republican — convertor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f3ede1;
+    --paper-hi:#fbf7ee;
+    --paper-lo:#e9e0cd;
+    --ink:#221e19;
+    --ink-soft:#6b6153;
+    --line:#d2c7b1;
+    --rouge:#9d2b26;
+    --bleu:#2b4a72;
+    --or:#a8853f;
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    background-color:var(--paper);
+    background-image:
+      radial-gradient(1100px 560px at 12% -8%, rgba(168,133,63,.14), transparent 62%),
+      radial-gradient(900px 520px at 102% 104%, rgba(43,74,114,.11), transparent 62%);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+
+  /* granulație de hârtie */
+  body::after{
+    content:"";
+    position:fixed; inset:0; z-index:9999; pointer-events:none;
+    opacity:.15; mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .wrap{ max-width:960px; margin:0 auto; padding:0 24px 90px; }
+
+  /* ---------- titlu ---------- */
+  .site-head{ padding:68px 0 34px; text-align:center; }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:.68rem; letter-spacing:.34em; text-transform:uppercase;
+    color:var(--rouge); margin:0 0 20px;
+  }
+
+  h1{
+    font-family:'Cormorant Garamond',Georgia,serif;
+    font-weight:600;
+    font-size:clamp(2.6rem,7.5vw,4.5rem);
+    line-height:1.02;
+    margin:0 0 20px;
+    letter-spacing:-.012em;
+  }
+  h1 em{ font-style:italic; color:var(--rouge); }
+
+  .lede{
+    max-width:590px; margin:0 auto;
+    color:var(--ink-soft);
+    font-size:1rem;
+  }
+
+  .tricolore{ display:flex; height:3px; max-width:120px; margin:30px auto 0; }
+  .tricolore i{ flex:1; }
+  .tricolore i:nth-child(1){ background:var(--bleu); }
+  .tricolore i:nth-child(2){ background:#fffdf7; }
+  .tricolore i:nth-child(3){ background:var(--rouge); }
+
+  /* ---------- convertor ---------- */
+  .convertor{
+    position:relative;
+    display:grid;
+    grid-template-columns:280px minmax(0,1fr);
+    gap:44px;
+    align-items:center;
+    margin-top:20px;
+    padding:42px 38px;
+    background:linear-gradient(180deg,var(--paper-hi),var(--paper-lo));
+    border:1px solid var(--line);
+    box-shadow:0 26px 54px -36px rgba(34,30,25,.9),
+               0 1px 0 rgba(255,255,255,.95) inset;
+  }
+  .convertor::before{
+    content:""; position:absolute; inset:7px;
+    border:1px solid rgba(210,199,177,.85);
+    pointer-events:none;
+  }
+
+  /* cadran */
+  .dial-wrap{ text-align:center; }
+  .dial{ width:100%; height:auto; display:block; }
+  .dial-face{ fill:var(--paper-hi); stroke:var(--line); stroke-width:1.5; }
+  .dial-inner{ fill:none; stroke:rgba(210,199,177,.95); stroke-width:1; }
+  .dial-tick{ stroke:var(--ink-soft); stroke-width:1.5; stroke-linecap:round; }
+  .dial-tick.major{ stroke:var(--rouge); stroke-width:2.5; }
+  .dial-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px; fill:var(--ink-soft);
+    text-anchor:middle; dominant-baseline:middle;
+  }
+  .dial-hand{ stroke:var(--ink); stroke-width:2.5; stroke-linecap:round; }
+  .dial-pin{ fill:var(--rouge); }
+  .dial-cap{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:.6rem; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--ink-soft); margin:14px 0 0;
+  }
+
+  /* panou dreapta */
+  .panel{ min-width:0; }
+
+  .panel-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:.62rem; letter-spacing:.28em; text-transform:uppercase;
+    color:var(--ink-soft); margin:0 0 14px;
+  }
+
+  .readout{
+    display:flex;
+    align-items:flex-end;
+    gap:.12em;
+    font-family:'IBM Plex Mono',monospace;
+    font-variant-numeric:tabular-nums;
+  }
+  .unit{ display:flex; flex-direction:column; align-items:center; gap:.18rem; }
+  .num{ font-size:clamp(2.1rem,6.2vw,3.4rem); line-height:1; font-weight:400; }
+  .frac{ font-size:.5em; color:var(--ink-soft); font-weight:300; }
+  .lbl{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:.58rem; line-height:1.1rem; height:1.1rem;
+    letter-spacing:.16em; text-transform:uppercase;
+    color:var(--ink-soft); white-space:nowrap;
+  }
+  .sep{
+    font-size:clamp(1.6rem,4.6vw,2.6rem);
+    line-height:1; color:var(--rouge);
+    margin-bottom:calc(1.1rem + .18rem);
+  }
+
+  /* controale */
+  .src{
+    margin-top:30px; padding-top:24px;
+    border-top:1px solid var(--line);
+  }
+  .src-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:.62rem; letter-spacing:.24em; text-transform:uppercase;
+    color:var(--ink-soft); margin:0 0 12px;
+  }
+  .src-row{ display:flex; flex-wrap:wrap; align-items:center; gap:16px; }
+
+  .time-inputs{ display:flex; align-items:center; gap:6px; }
+  .time-inputs span{ color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; }
+  .time-inputs input{
+    width:56px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:1.12rem;
+    text-align:center;
+    color:var(--ink);
+    background:transparent;
+    border:none;
+    border-bottom:2px solid var(--line);
+    padding:6px 2px;
+    outline:none;
+    transition:border-color .16s;
+  }
+  .time-inputs input:focus{ border-bottom-color:var(--rouge); }
+
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
+
+  .btn{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+    padding:9px 18px;
+    background:transparent;
+    border:1px solid var(--ink);
+    color:var(--ink);
+    cursor:pointer;
+    transition:background .18s,color .18s,border-color .18s;
+  }
+  .btn:hover{ background:var(--ink); color:var(--paper-hi); }
+  .btn.is-live{ background:var(--rouge); border-color:var(--rouge); color:#fff; }
+  .btn.is-live:hover{ background:#86231f; border-color:#86231f; }
+
+  input[type=range]{
+    -webkit-appearance:none; appearance:none;
+    width:100%; height:2px;
+    background:var(--line);
+    margin:28px 0 0;
+    outline:none; cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:15px; height:15px; border-radius:50%;
+    background:var(--rouge);
+    border:2px solid var(--paper-hi);
+    box-shadow:0 0 0 1px var(--rouge);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:13px; height:13px; border-radius:50%;
+    background:var(--rouge);
+    border:2px solid var(--paper-hi);
+    box-shadow:0 0 0 1px var(--rouge);
+  }
+
+  .status{
+    display:flex; align-items:center; gap:8px;
+    margin-top:18px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:.72rem; letter-spacing:.06em;
+    color:var(--ink-soft);
+  }
+  .dot{ width:7px; height:7px; border-radius:50%; background:var(--line); }
+  .dot.live{ background:#3f8a4f; animation:pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.25} }
+
+  /* ---------- secțiuni ---------- */
+  .block{ margin-top:70px; }
+  .block h2{
+    font-family:'Cormorant Garamond',Georgia,serif;
+    font-weight:600;
+    font-size:clamp(1.6rem,3.8vw,2.15rem);
+    margin:0 0 4px;
+    letter-spacing:-.005em;
+  }
+  .block h2 .nr{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:.52em; color:var(--rouge);
+    vertical-align:.18em; margin-right:.7em; letter-spacing:.1em;
+  }
+  .rule{ height:1px; background:var(--line); margin:16px 0 26px; }
+  .block p{ margin:0 0 16px; color:var(--ink-soft); }
+  .block p strong{ color:var(--ink); font-weight:600; }
+
+  .laws{
+    display:grid; grid-template-columns:repeat(3,1fr);
+    gap:1px; background:var(--line);
+    border:1px solid var(--line);
+    margin:26px 0 22px;
+  }
+  .law{ background:var(--paper-hi); padding:26px 18px; text-align:center; }
+  .law .big{
+    display:block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:1.7rem; color:var(--rouge); line-height:1.1;
+  }
+  .law .txt{
+    display:block; margin-top:6px;
+    font-size:.78rem; letter-spacing:.06em;
+    color:var(--ink-soft); text-transform:uppercase;
+  }
+
+  table{ width:100%; border-collapse:collapse; font-size:.92rem; margin-top:6px; }
+  th,td{ text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); }
+  th{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:.66rem; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--ink-soft); font-weight:500;
+  }
+  td:first-child{ font-family:'IBM Plex Mono',monospace; }
+  td:last-child{ font-family:'IBM Plex Mono',monospace; color:var(--rouge); }
+  tbody tr:hover{ background:rgba(255,255,255,.5); }
+
+  .note{
+    font-size:.85rem; color:var(--ink-soft);
+    border-left:2px solid var(--or);
+    padding-left:16px; margin-top:22px;
+  }
+
+  footer{
+    margin-top:84px; padding-top:26px;
+    border-top:1px solid var(--line);
+    display:flex; justify-content:space-between;
+    flex-wrap:wrap; gap:14px;
+    font-size:.8rem; color:var(--ink-soft);
+  }
+  footer em{ font-style:normal; color:var(--ink); }
+
+  /* ---------- mobil ---------- */
+  @media (max-width:760px){
+    .convertor{ grid-template-columns:1fr; gap:30px; padding:34px 22px; }
+    .dial-wrap{ max-width:230px; margin:0 auto; }
+    .laws{ grid-template-columns:1fr; }
+    .site-head{ padding-top:48px; }
+    .readout{ justify-content:center; }
+  }
+</style>
 </head>
 <body>
-    <nav>
-        <div class="nav-content">
-            <div class="logo-area">
-                <h1>Explorand umanitatea</h1>
-                <span class="class-text">Proiecte realizate de elevii clasei a IX-a A</span>
-            </div>
-            <div class="search-area">
-                <input type="text" id="search-input" placeholder="Cauta proiecte...">
-            </div>
-        </div>
-    </nav>
-    <div id="container">
-        <!-- Cards will be injected here by script.js -->
+
+<div class="wrap">
+
+  <header class="site-head">
+    <p class="eyebrow">Proiect de istorie &middot; Revoluția Franceză</p>
+    <h1>Timpul <em>Decimal</em></h1>
+    <p class="lede">
+      În 1793, Franța revoluționară a încercat să rescrie ceasul lumii.
+      O zi avea să aibă zece ore, o oră — o sută de minute, un minut — o sută de secunde.
+      Mai jos poți traduce orice oră obișnuită în timp republican.
+    </p>
+    <div class="tricolore"><i></i><i></i><i></i></div>
+  </header>
+
+  <div class="convertor">
+
+    <div class="dial-wrap">
+      <svg viewBox="0 0 300 300" class="dial" aria-hidden="true">
+        <circle class="dial-face" cx="150" cy="150" r="132"/>
+        <circle class="dial-inner" cx="150" cy="150" r="112"/>
+        <g id="ticks"></g>
+        <g id="labels"></g>
+        <line id="hand" class="dial-hand" x1="150" y1="150" x2="150" y2="52"/>
+        <circle class="dial-pin" cx="150" cy="150" r="6"/>
+      </svg>
+      <p class="dial-cap">un singur ac, o rotație pe zi</p>
     </div>
-    <footer>
-        <p class="credits">Site realizat de Nadoleanu Matei, prezentari alese de Olteanu Darius</p>
-    </footer>
-    <div id="pdf-viewer" style="display: none;">
-        <iframe id="pdf-frame" src=""></iframe>
-        <div id="pdf-footer">
-            <button id="close-pdf">Inchide</button>
+
+    <div class="panel">
+      <p class="panel-label">Timp decimal republican</p>
+
+      <div class="readout">
+        <div class="unit">
+          <span class="num" id="dh">0</span>
+          <span class="lbl">oră</span>
         </div>
+        <span class="sep">:</span>
+        <div class="unit">
+          <span class="num" id="dm">00</span>
+          <span class="lbl">minut</span>
+        </div>
+        <span class="sep">:</span>
+        <div class="unit">
+          <span class="num"><span id="dsi">00</span><span class="frac" id="dsf">.00</span></span>
+          <span class="lbl">secundă</span>
+        </div>
+      </div>
+
+      <div class="src">
+        <p class="src-label">Timp obișnuit</p>
+        <div class="src-row">
+          <div class="time-inputs">
+            <input id="in-h" type="number" min="0" max="23" step="1" value="12" aria-label="ore">
+            <span>:</span>
+            <input id="in-m" type="number" min="0" max="59" step="1" value="00" aria-label="minute">
+            <span>:</span>
+            <input id="in-s" type="number" min="0" max="59" step="1" value="00" aria-label="secunde">
+          </div>
+          <button class="btn" id="btn-now" type="button">Acum</button>
+        </div>
+
+        <input type="range" id="slider" min="0" max="86399" step="1" value="43200" aria-label="glisor pentru momentul zilei">
+
+        <div class="status">
+          <span class="dot" id="dot"></span>
+          <span id="status-text">oră reală</span>
+        </div>
+      </div>
     </div>
-    <script src="script.js"></script>
+
+  </div>
+
+  <!-- I -->
+  <section class="block">
+    <h2><span class="nr">I.</span>Cum se calculează</h2>
+    <div class="rule"></div>
+
+    <p>
+      Ziua decimală începe, ca și cea obișnuită, la miezul nopții. Diferența e că totul
+      se împarte la zece, apoi la o sută, apoi iar la o sută — fără cele 24, 60 și 60
+      moștenite din Babilon. Amiaza cade astfel la <strong>5h 00m 00s</strong>, iar
+      miezul nopții următor la <strong>10h 00m 00s</strong>.
+    </p>
+
+    <div class="laws">
+      <div class="law"><span class="big">10</span><span class="txt">ore într-o zi</span></div>
+      <div class="law"><span class="big">100</span><span class="txt">minute într-o oră</span></div>
+      <div class="law"><span class="big">100</span><span class="txt">secunde într-un minut</span></div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Timp obișnuit</th><th>Timp decimal</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>00:00</td><td>0h 00m 00s</td></tr>
+        <tr><td>06:00</td><td>2h 50m 00s</td></tr>
+        <tr><td>12:00</td><td>5h 00m 00s</td></tr>
+        <tr><td>18:00</td><td>7h 50m 00s</td></tr>
+        <tr><td>24:00</td><td>10h 00m 00s</td></tr>
+        <tr><td>1 oră obișnuită</td><td>41m 66,67s</td></tr>
+        <tr><td>1 minut obișnuit</td><td>69,44s</td></tr>
+      </tbody>
+    </table>
+
+    <p class="note">
+      O oră decimală ține 2 h 24 min din timpul nostru; un minut decimal — 1 min 26,4 s;
+      o secundă decimală — 0,864 s. Convertorul lucrează cu precizie de o sutime de secundă decimală.
+    </p>
+  </section>
+
+  <!-- II -->
+  <section class="block">
+    <h2><span class="nr">II.</span>Scurt istoric</h2>
+    <div class="rule"></div>
+
+    <p>
+      La <strong>5 octombrie 1793</strong>, Convenția Națională a decretat timpul decimal,
+      ca parte a aceluiași efort de a raționaliza totul: lungimile, greutățile, moneda,
+      calendarul. Ziua avea să fie împărțită în zece părți egale, iar ceasurile vechi
+      urmau să dispară cu totul.
+    </p>
+
+    <p>
+      În practică, lucrurile au mers greu. Ceasornicarii au produs câteva modele cu cadran
+      de zece ore, dar lumea continua să-și folosească ceasurile obișnuite; administrația
+      lucra după două orare simultan, iar documentele vremii amestecă frecvent cele două
+      sisteme. Un ceas decimal avea deseori un singur ac, care înconjura cadranul o dată
+      la 24 de ore — exact ca cel din stânga.
+    </p>
+
+    <p>
+      Timpul decimal a fost abandonat în <strong>aprilie 1795</strong>, după mai puțin de
+      un an și jumătate de la introducere. A rămas o curiozitate în muzeele de ceasornicărie
+      și o dovadă că nu orice reformă rațională prinde rădăcini.
+    </p>
+  </section>
+
+  <footer>
+    <span>Proiect realizat pentru ora de istorie.</span>
+    <span>Surse: <em>decretul Convenției Naționale din 5 octombrie 1793</em>; Musée international d'horlogerie, La Chaux-de-Fonds.</span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  var CX = 150, CY = 150;
+
+  /* ---- construim cadranul ---- */
+  var ticksG  = document.getElementById('ticks');
+  var labelsG = document.getElementById('labels');
+
+  for (var i = 0; i < 10; i++) {
+    var a = (i * 36 - 90) * Math.PI / 180;
+    var major = (i === 0 || i === 5);
+    var r1 = major ? 100 : 106;
+    var r2 = major ? 126 : 120;
+
+    var ln = document.createElementNS(SVGNS, 'line');
+    ln.setAttribute('x1', (CX + Math.cos(a) * r1).toFixed(2));
+    ln.setAttribute('y1', (CY + Math.sin(a) * r1).toFixed(2));
+    ln.setAttribute('x2', (CX + Math.cos(a) * r2).toFixed(2));
+    ln.setAttribute('y2', (CY + Math.sin(a) * r2).toFixed(2));
+    ln.setAttribute('class', 'dial-tick' + (major ? ' major' : ''));
+    ticksG.appendChild(ln);
+
+    var t = document.createElementNS(SVGNS, 'text');
+    t.setAttribute('x', (CX + Math.cos(a) * 82).toFixed(2));
+    t.setAttribute('y', (CY + Math.sin(a) * 82).toFixed(2));
+    t.setAttribute('class', 'dial-label');
+    t.textContent = i;
+    labelsG.appendChild(t);
+  }
+
+  /* ---- referințe ---- */
+  var el = {
+    dh:      document.getElementById('dh'),
+    dm:      document.getElementById('dm'),
+    dsi:     document.getElementById('dsi'),
+    dsf:     document.getElementById('dsf'),
+    h:       document.getElementById('in-h'),
+    m:       document.getElementById('in-m'),
+    s:       document.getElementById('in-s'),
+    slider:  document.getElementById('slider'),
+    btnNow:  document.getElementById('btn-now'),
+    hand:    document.getElementById('hand'),
+    dot:     document.getElementById('dot'),
+    status:  document.getElementById('status-text')
+  };
+
+  var live = true;
+
+  function clamp(n, a, b) { return n < a ? a : (n > b ? b : n); }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+  function nowSeconds() {
+    var d = new Date();
+    return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds() + d.getMilliseconds() / 1000;
+  }
+
+  /* ---- desenăm starea pentru un moment al zilei ---- */
+  function render(sec) {
+    sec = ((sec % 86400) + 86400) % 86400;
+
+    /* secunde decimale scurse din zi, rotunjite la 2 zecimale */
+    var total = Math.round(sec / 0.864 * 100) / 100;
+    if (total >= 100000) total -= 100000;
+
+    var dh   = Math.floor(total / 10000);
+    var rest = total - dh * 10000;
+    var dm   = Math.floor(rest / 100);
+    var ds   = rest - dm * 100;
+
+    var dsInt  = Math.floor(ds + 1e-9);
+    var dsFrac = Math.round((ds - dsInt) * 100);
+    if (dsFrac === 100) { dsFrac = 0; dsInt += 1; }
+    if (dsInt === 100)  { dsInt = 0;  dm += 1; }
+    if (dm === 100)     { dm = 0;     dh += 1; }
+    if (dh === 10)      { dh = 0; }
+
+    el.dh.textContent  = dh;
+    el.dm.textContent  = pad2(dm);
+    el.dsi.textContent = pad2(dsInt);
+    el.dsf.textContent = '.' + pad2(dsFrac);
+
+    el.hand.setAttribute('transform', 'rotate(' + (sec / 86400 * 360).toFixed(3) + ' 150 150)');
+  }
+
+  /* ---- sincronizăm câmpurile de intrare ---- */
+  function syncInputs(sec) {
+    el.h.value = pad2(Math.floor(sec / 3600));
+    el.m.value = pad2(Math.floor(sec / 60) % 60);
+    el.s.value = pad2(Math.floor(sec) % 60);
+    el.slider.value = Math.floor(sec);
+  }
+
+  function readInputs() {
+    var h = clamp(parseInt(el.h.value, 10) || 0, 0, 23);
+    var m = clamp(parseInt(el.m.value, 10) || 0, 0, 59);
+    var s = clamp(parseInt(el.s.value, 10) || 0, 0, 59);
+    return h * 3600 + m * 60 + s;
+  }
+
+  /* ---- modul live / manual ---- */
+  function setLive(v) {
+    live = v;
+    el.btnNow.classList.toggle('is-live', v);
+    el.dot.classList.toggle('live', v);
+    el.status.textContent = v ? 'oră reală' : 'oră introdusă manual';
+    if (v) tick();
+  }
+
+  function tick() {
+    if (!live) return;
+    var sec = nowSeconds();
+    render(sec);
+    syncInputs(sec);
+  }
+
+  /* ---- evenimente ---- */
+  [el.h, el.m, el.s].forEach(function (inp) {
+    inp.addEventListener('focus', function () { setLive(false); });
+
+    inp.addEventListener('input', function () {
+      setLive(false);
+      render(readInputs());
+    });
+
+    inp.addEventListener('blur', function () {
+      var sec = readInputs();
+      el.h.value = pad2(Math.floor(sec / 3600));
+      el.m.value = pad2(Math.floor(sec / 60) % 60);
+      el.s.value = pad2(Math.floor(sec) % 60);
+      render(sec);
+    });
+
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') inp.blur();
+    });
+  });
+
+  el.slider.addEventListener('input', function () {
+    setLive(false);
+    var sec = parseFloat(el.slider.value) || 0;
+    render(sec);
+    el.h.value = pad2(Math.floor(sec / 3600));
+    el.m.value = pad2(Math.floor(sec / 60) % 60);
+    el.s.value = pad2(Math.floor(sec) % 60);
+  });
+
+  el.btnNow.addEventListener('click', function () { setLive(true); });
+
+  /* ---- pornire ---- */
+  var start = nowSeconds();
+  render(start);
+  syncInputs(start);
+  setLive(true);
+
+  setInterval(tick, 50);
+})();
+</script>
+
 </body>
 </html>
